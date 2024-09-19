@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Firewall
 {
-    public class Encrypt : IEncryptController
+    public class Encrypt : IEncrypt
     {
         private static readonly string passphrase = "k*2ja6g3n1";
 

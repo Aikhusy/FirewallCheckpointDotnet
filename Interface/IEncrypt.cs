@@ -6,7 +6,7 @@ using System.Text;
 // file yang berisi enkripsi yang digunakan untuk enkripsi dan dekripsi data password.
 namespace Firewall
 {
-    public interface IEncryptController
+    public interface IEncrypt
     {
 
         string EncryptPassword(string plainPassword);

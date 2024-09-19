@@ -14,7 +14,7 @@ namespace Firewall
 
         string GetConnectionString();
         public void ExecuteInsertQuery(string queryName, params object[] parameters);
-        public List<Dictionary<string, object>> ExecuteSelectQuery(string queryName);
+        public List<Dictionary<string, object>> ExecuteSelectQuery(string queryName,OdbcConnection connection);
         public int GetToken();
         public string GetFirewallName(int parameter);
         public void InsertUptimeData(int firewallId, int runToken, string currentTime, int days, string uptime, int users, double load1, double load5, double load15);
