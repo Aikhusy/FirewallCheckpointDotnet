@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "/Okc0CRWmC8=",
+  "dgSpecHash": "OeYpvjQOWn0=",
   "success": true,
   "projectFilePath": "C:\\Users\\HAPE\\Desktop\\FirewallCheckpointDotnet\\FirewallCheckpoint.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HAPE\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\8.0.0\\microsoft.extensions.dependencyinjection.8.0.0.nupkg.sha512",
     "C:\\Users\\HAPE\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\HAPE\\.nuget\\packages\\ssh.net\\2024.1.0\\ssh.net.2024.1.0.nupkg.sha512",
     "C:\\Users\\HAPE\\.nuget\\packages\\system.data.odbc\\8.0.0\\system.data.odbc.8.0.0.nupkg.sha512",
     "C:\\Users\\HAPE\\.nuget\\packages\\system.text.encoding.codepages\\8.0.0\\system.text.encoding.codepages.8.0.0.nupkg.sha512"
   ],

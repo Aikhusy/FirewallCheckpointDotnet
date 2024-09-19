@@ -11,10 +11,6 @@ namespace Firewall
     {
         private readonly IConnection _connection;
 
-        public Firewall()
-        {
-        }
-
         // Constructor to inject the connection dependency
         public Firewall(IConnection connection)
         {

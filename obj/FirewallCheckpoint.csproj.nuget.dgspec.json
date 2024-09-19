@@ -47,6 +47,10 @@
               "target": "Package",
               "version": "[8.0.0, )"
             },
+            "SSH.NET": {
+              "target": "Package",
+              "version": "[2024.1.0, )"
+            },
             "System.Data.Odbc": {
               "target": "Package",
               "version": "[8.0.0, )"

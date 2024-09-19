@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic; // You need this for Dictionary
 using System.Text.RegularExpressions;
-using Azure.Identity;
+using System.Data.Odbc;
 
 //==== Regex.cs ====
 // file yang berisi regular expression untuk membaca data yang telah didapatkan dan menyimpannya kedalam database
-namespace DotNetBelajar.Model
+namespace Firewall
 {
-    public static class Regexs
+    public class Regexs : IRegexs
     {
+        private  readonly IConnection _connection;
+        public Regexs (IConnection connection)
+        {
+            _connection = connection;
+        }
         private const bool detailedSave = true; // digunakan untuk status apakah detail data akan disimpan di database
 
-        public static int parseSecond(int days, string hourSecond)
+        public  int parseSecond(int days, string hourSecond)
         {
             var timeParts = hourSecond.Split(':');
 
@@ -28,28 +33,28 @@ namespace DotNetBelajar.Model
         }
 
         //untuk Casting data ke double atau default = 0
-        private static double ParseDouble(string value)
+        private  double ParseDouble(string value)
         {
             double result;
             return double.TryParse(value, out result) ? result : 0;
         }
 
         //untuk casting tipe data ke int atau default = 0
-        private static int ParseInt(string value)
+        private  int ParseInt(string value)
         {
             int result;
             return int.TryParse(value, out result) ? result : 0;
         }
 
         //untuk casting tipe data ke long atau default = 0
-        private static long ParseLong(string value)
+        private  long ParseLong(string value)
         {
             long result;
             return long.TryParse(value, out result) ? result : 0;
         }
 
         //untuk menyimpan nilai regex yang digunakan untuk membaca data 
-        public static Dictionary<string, Regex> Patterns { get; } = new Dictionary<string, Regex>
+        public  Dictionary<string, Regex> Patterns { get; } = new Dictionary<string, Regex>
         {
             { "uptime_default", new Regex(
                 @"(?<current_time>\d{2}:\d{2}:\d{2})\s+up\s+(?<days>\d+)\s+days?,\s+(?<uptime>\d{1,2}:\d{2}),\s+(?<users>\d+)\s+user[s]?,\s+load\s+average:\s+(?<load1>\d+\.\d+),\s+(?<load5>\d+\.\d+),\s+(?<load15>\d+\.\d+)"
@@ -135,7 +140,7 @@ namespace DotNetBelajar.Model
         };
 
         //function untuk Mengolah data uptime, dan menyimpan ke database.
-        public static Dictionary<string, string> RegexUptime(string inputs, int fwId, int tokenId)
+        public  Dictionary<string, string> RegexUptime(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             // Try the first regex pattern (uptime_default)
             Match match = Patterns["uptime_default"].Match(inputs);
@@ -171,7 +176,7 @@ namespace DotNetBelajar.Model
 
                 if (detailedSave)
                 {
-                    Connection.InsertUptimeData(fwId, tokenId, currentTime, int.Parse(days), uptime, int.Parse(users), double.Parse(load1), double.Parse(load5), double.Parse(load15));
+                    _connection.InsertUptimeData(connection, fwId, tokenId, currentTime, int.Parse(days), uptime, int.Parse(users), double.Parse(load1), double.Parse(load5), double.Parse(load15));
                 }
 
                 return new Dictionary<string, string>
@@ -192,7 +197,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data RAM dan SWAP, dan menyimpan ke database.
-        public static Dictionary<string, double> RegexMemory(string inputs, int fwId, int tokenId)
+        public  Dictionary<string, double> RegexMemory(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             var matches = Patterns["memory"].Matches(inputs);
             double swap = 0;
@@ -215,7 +220,7 @@ namespace DotNetBelajar.Model
                     double buffCache = ParseDouble(match.Groups["buff_cache"].Value);
                     double available = ParseDouble(match.Groups["available"].Value);
 
-                    Connection.InsertMemoryData(fwId, tokenId, type, total, used, free, shared, buffCache, available);
+                    _connection.InsertMemoryData(connection, fwId, tokenId, type, total, used, free, shared, buffCache, available);
                 }
 
                 if (total > 0)
@@ -240,7 +245,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data disk (/tmp dan /logs), dan menyimpan ke database.
-        public static Dictionary<string, string> RegexDisk(string inputs, int fwId, int tokenId)
+        public  Dictionary<string, string> RegexDisk(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             var matches = Patterns["filesystem"].Matches(inputs);
             string fwtmp = "0";
@@ -267,7 +272,8 @@ namespace DotNetBelajar.Model
                     double available = ParseDouble(match.Groups["blocks"].Value);
                     double used = ParseDouble(match.Groups["used"].Value);
                     double use_percent = ParseDouble(match.Groups["use_percent"].Value);
-                    Connection.InsertDiskSpaceData(
+                    _connection.InsertDiskSpaceData(
+                        connection,
                         fwId,
                         tokenId,
                         match.Groups["filesystem"].Value,
@@ -288,7 +294,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data Rx error dan Tx error, dan menyimpan ke database.
-        public static Dictionary<string, int> RegexRxTx(string inputs, int fwId, int tokenId)
+        public  Dictionary<string, int> RegexRxTx(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             var pattern = Patterns["rx_tx"];
             var matches = pattern.Matches(inputs);
@@ -325,7 +331,8 @@ namespace DotNetBelajar.Model
                     string txHumanReadable = match.Groups[23].Value;
 
                     // Insert data into the database
-                    Connection.InsertRxtxData(
+                    _connection.InsertRxtxData(
+                        connection,
                         fwId,
                         tokenId,
                         @interface,
@@ -366,7 +373,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data Raid, dan menyimpan ke database.
-        public static string RegexRaid(string inputs, int fwId, int tokenId)
+        public  string RegexRaid(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             // Try the first regex pattern (raid_default)
             var pattern = Patterns["raid"];
@@ -390,7 +397,7 @@ namespace DotNetBelajar.Model
                     int numberOfDisks = ParseInt(match.Groups["number_of_disks"].Value);
                     var raidSize = match.Groups["raid_size"].Value;
                     var flags = match.Groups["flags"].Value;
-                    Connection.InsertRaidData(fwId, tokenId, volumeId, raidLevel, numberOfDisks, raidSize, state, flags);
+                    _connection.InsertRaidData(connection, fwId, tokenId, volumeId, raidLevel, numberOfDisks, raidSize, state, flags);
 
                 }
             }
@@ -399,7 +406,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data patch firewall, dan menyimpannya ke database.
-        public static string RegexHotfix(string inputs, int fwId, int tokenId)
+        public  string RegexHotfix(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             // Define the regex pattern for hotfix
             var pattern = Patterns["hotfix"];
@@ -418,7 +425,7 @@ namespace DotNetBelajar.Model
                 if (detailedSave) // Ensure to check if detailedSave is enabled
                 {
                     var buildNumber = match.Groups[2].Value;
-                    Connection.InsertHotfixData(fwId, tokenId, hotfixValue, buildNumber);
+                    _connection.InsertHotfixData(connection, fwId, tokenId, hotfixValue, buildNumber);
                 }
             }
 
@@ -426,7 +433,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data CPU, dan menyimpannya ke database.
-        public static string RegexCpu(string inputs, int fwId, int tokenId)
+        public  string RegexCpu(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
 
             var pattern = Patterns["cpu"];
@@ -443,7 +450,8 @@ namespace DotNetBelajar.Model
                 // Insert data into the database
                 if (detailedSave) // Ensure to check if detailedSave is enabled
                 {
-                    Connection.InsertCpuData(
+                    _connection.InsertCpuData(
+                        connection,
                         fwId,
                         tokenId,
                         int.Parse(match.Groups["user"].Value),
@@ -465,7 +473,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data memory gagal, dan menyimpannya ke database.
-        public static int RegexFailedMemory(string inputs, int fwId, int tokenId)
+        public  int RegexFailedMemory(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             // Define patterns for memory, allocation, and free statistics
             var memoryStat = Patterns["memory_stat"];
@@ -515,7 +523,8 @@ namespace DotNetBelajar.Model
             // Insert the data into the database
             if (detailedSave) // Ensure the detailedSave flag is respected
             {
-                Connection.InsertFailedMemoryData(
+                _connection.InsertFailedMemoryData(
+                    connection,
                     fwId,
                     tokenId,
                     totalMemory,
@@ -532,7 +541,7 @@ namespace DotNetBelajar.Model
         }
 
         //function untuk mengolah data SyncMode dan Sync State, serta menyimpannya ke database.
-        public static Dictionary<string, string> RegexSyncMode(string inputState, string inputMode, int fwId, int tokenId)
+        public  Dictionary<string, string> RegexSyncMode(OdbcConnection connection,string inputState, string inputMode, int fwId, int tokenId)
         {
             // Define the regex patterns for sync_mode and sync_state
             var syncModePattern = Patterns["sync_mode"];
@@ -567,7 +576,7 @@ namespace DotNetBelajar.Model
                     ipAddress = match.Groups[1].Value;
                     load = match.Groups[2].Value;
                     name = match.Groups[4].Value;
-                    Connection.InsertClusterXlData(fwId, tokenId, syncMode, ipAddress, load, state, name);
+                    _connection.InsertClusterXlData(connection, fwId, tokenId, syncMode, ipAddress, load, state, name);
                 }
             }
 
@@ -579,7 +588,7 @@ namespace DotNetBelajar.Model
                 };
         }
 
-        public static string RegexExpiration(string inputs, int fwId, int tokenId)
+        public  string RegexExpiration(OdbcConnection connection,string inputs, int fwId, int tokenId)
         {
             var contract = Patterns["contract_expiration"];
             var matches = contract.Matches(inputs);
@@ -615,7 +624,7 @@ namespace DotNetBelajar.Model
                 foreach (KeyValuePair<string, int> count in counts) // Perbaikan tipe data
                 {
                     // Menggunakan count.Key dan count.Value untuk akses dictionary
-                    Connection.InsertLicenseContractData(fwId, tokenId, count.Key, count.Value);
+                    _connection.InsertLicenseContractData(connection, fwId, tokenId, count.Key, count.Value);
                 }
             }
 

@@ -28,7 +28,7 @@ namespace Firewall
         public string GetConnectionString()
         {
             IDB config = _JsonReader.ReadDatabaseJsonConfig("Config.json");
-            
+
             return $"Driver={config.Driver};Server={config.Server};Database={config.Database};Uid={config.UID};Pwd={config.PWD};Encrypt={config.Encrypt};TrustServerCertificate={config.TrustServerCertificate};";
         }
 
@@ -149,7 +149,7 @@ namespace Firewall
             }
         };
 
-        public void ExecuteInsertQuery(string queryName, params object[] parameters)
+        public void ExecuteInsertQuery(OdbcConnection connection, string queryName, params object[] parameters)
         {
             if (!InsertQueries.ContainsKey(queryName))
             {
@@ -158,28 +158,20 @@ namespace Firewall
 
             string query = InsertQueries[queryName];
 
-            using (OdbcConnection connection = new OdbcConnection(GetConnectionString()))
+            connection.Open();
+
+            using (OdbcCommand command = new OdbcCommand(query, connection))
             {
-                try
+                // Add parameters to the command
+                for (int i = 0; i < parameters.Length; i++)
                 {
-                    connection.Open();
-
-                    using (OdbcCommand command = new OdbcCommand(query, connection))
-                    {
-                        // Add parameters to the command
-                        for (int i = 0; i < parameters.Length; i++)
-                        {
-                            command.Parameters.AddWithValue($"@param{i}", parameters[i]);
-                        }
-
-                        command.ExecuteNonQuery();
-                    }
+                    command.Parameters.AddWithValue($"@param{i}", parameters[i]);
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("An error occurred: " + ex.Message);
-                }
+
+                command.ExecuteNonQuery();
             }
+
+
         }//✔️
 
         public List<Dictionary<string, object>> ExecuteSelectQuery(string queryName, OdbcConnection connection)
@@ -220,216 +212,183 @@ namespace Firewall
             return results;
         }
 
-        public int GetToken()
+        public int GetToken(OdbcConnection connection)
         {
             string random = RandomString(12);
             string query = InsertQueries["get_token"];
-            using (OdbcConnection connection = new OdbcConnection(GetConnectionString()))
+
+            connection.Open();
+
+            // Use the provided query
+            using (OdbcCommand command = new OdbcCommand(query, connection))
             {
-                try
-                {
-                    connection.Open();
-
-                    // Use the provided query
-                    using (OdbcCommand command = new OdbcCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@run_token", random);
-                        command.Parameters.AddWithValue("@run_type", "DailyRun");
-                        command.ExecuteNonQuery();
-                    }
-
-                    string lastId = SelectQueries["last_id"];
-
-                    using (OdbcCommand idCommand = new OdbcCommand(lastId, connection))
-                    {
-
-                        idCommand.Parameters.AddWithValue("@run_token", random);
-                        object result = idCommand.ExecuteScalar();
-
-                        if (result != null)
-                        {
-
-                            int insertedId = Convert.ToInt32(result);
-
-                            return insertedId;
-                        }
-
-                    }
-                    return 1;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("An error occurred: " + ex.Message);
-                }
+                command.Parameters.AddWithValue("@run_token", random);
+                command.Parameters.AddWithValue("@run_type", "DailyRun");
+                command.ExecuteNonQuery();
             }
 
-            return 1;
+            string lastId = SelectQueries["last_id"];
 
+            using (OdbcCommand idCommand = new OdbcCommand(lastId, connection))
+            {
+
+                idCommand.Parameters.AddWithValue("@run_token", random);
+                object result = idCommand.ExecuteScalar();
+
+                if (result != null)
+                {
+
+                    int insertedId = Convert.ToInt32(result);
+
+                    return insertedId;
+                }
+
+            }
+            return 1;
         }//✔️
 
-        public string GetFirewallName(int parameter)
+        public string GetFirewallName(OdbcConnection connection, int parameter)
         {
             string query = SelectQueries["fw_name"];
 
-            using (OdbcConnection connection = new OdbcConnection(GetConnectionString()))
+            using (OdbcCommand idCommand = new OdbcCommand(query, connection))
             {
-                try
+
+                idCommand.Parameters.AddWithValue("@id", parameter);
+                object result = idCommand.ExecuteScalar();
+
+                if (result != null)
                 {
-                    connection.Open();
 
-                    using (OdbcCommand idCommand = new OdbcCommand(query, connection))
-                    {
+                    string insertedId = (string)result;
 
-                        idCommand.Parameters.AddWithValue("@id", parameter);
-                        object result = idCommand.ExecuteScalar();
-
-                        if (result != null)
-                        {
-
-                            string insertedId = (string)result;
-
-                            return insertedId;
-                        }
-
-                    }
-                    return "gaada";
+                    return insertedId;
                 }
-                catch (Exception ex)
+
+            }
+            return "gaada";
+        }//✔️
+
+        public void InsertUptimeData(OdbcConnection connection, int firewallId, int runToken, string currentTime, int days, string uptime, int users, double load1, double load5, double load15)
+        {
+            ExecuteInsertQuery(connection, "uptime", firewallId, runToken, currentTime, days, uptime, users, load1, load5, load15);
+        }//✔️
+
+        public void InsertMemoryData(OdbcConnection connection, int firewallId, int runToken, string memType, double memTotal, double memUsed, double memFree, double memShared, double memCache, double memAvailable)
+        {
+            ExecuteInsertQuery(connection, "memory", firewallId, runToken, memType, memTotal, memUsed, memFree, memShared, memCache, memAvailable);
+        }//✔️
+
+        public void InsertDiskSpaceData(OdbcConnection connection, int firewallId, int runToken, string filesystem, string mountedOn, double total, double available, double used, double usedPercentage)
+        {
+            ExecuteInsertQuery(connection, "diskspace", firewallId, runToken, filesystem, mountedOn, total, available, used, usedPercentage);
+        }//✔️
+
+        public void InsertCpuData(OdbcConnection connection, int firewallId, int runToken, double cpuUserTimePercentage, double cpuSystemTimePercentage, double cpuIdleTimePercentage, double cpuUsagePercentage, double cpuQueueLength, double cpuInterruptPerSec, int cpuNumber)
+        {
+            ExecuteInsertQuery(connection, "cpu", firewallId, runToken, cpuUserTimePercentage, cpuSystemTimePercentage, cpuIdleTimePercentage, cpuUsagePercentage, cpuQueueLength, cpuInterruptPerSec, cpuNumber);
+        }//✔️
+
+        public void InsertRaidData(OdbcConnection connection, int firewallId, int runToken, string raidVolumeId, string raidLevel, int raidNumberOfDisks, string raidSize, string raidState, string raidFlag)
+        {
+            ExecuteInsertQuery(connection, "raid", firewallId, runToken, raidVolumeId, raidLevel, raidNumberOfDisks, raidSize, raidState, raidFlag);
+        }//✔️
+
+        public void InsertRxtxData(OdbcConnection connection, int firewallId, int runToken, string? @interface, string? hwaddr, string? inetAddr, string? bcast, string? mask, int mtu, int metric, int rxPackets, int rxErrors, int rxDropped, int rxOverruns, int rxFrame, int txPackets, int txErrors, int txDropped, int txOverruns, int txCarrier, int collisions, int txqueuelen, long rxBytes, string rxHumanReadable, long txBytes, string txHumanReadable)
+        {
+            ExecuteInsertQuery(connection, "rxtx", firewallId, runToken, @interface, hwaddr, inetAddr, bcast, mask, mtu, metric, rxPackets, rxErrors, rxDropped, rxOverruns, rxFrame, txPackets, txErrors, txDropped, txOverruns, txCarrier, collisions, txqueuelen, rxBytes, rxHumanReadable, txBytes, txHumanReadable);
+        }
+
+        public void InsertLicenseStatusData(OdbcConnection connection, int firewallId, int runToken, string licenseHost, DateTime licenseExpiration, string licenseFeature)
+        {
+            ExecuteInsertQuery(connection, "licenses_status", firewallId, runToken, licenseHost, licenseExpiration, licenseFeature);
+        }
+
+        public void InsertLicenseContractData(OdbcConnection connection, int firewallId, int runToken, string contractExpiration, int contractTotal)
+        {
+            ExecuteInsertQuery(connection, "licenses_contract", firewallId, runToken, contractExpiration, contractTotal);
+        }//✔️
+
+        public void InsertHotfixData(OdbcConnection connection, int firewallId, int runToken, string kernel, string buildNumber)
+        {
+            ExecuteInsertQuery(connection, "hotfix", firewallId, runToken, kernel, buildNumber);
+        }//✔️
+
+        public void InsertFailedMemoryData(OdbcConnection connection, int firewallId, int runToken, double totalMemory, double peakMemory, double totalAlloc, double failedAlloc, double totalFree, double failedFree)
+        {
+            ExecuteInsertQuery(connection, "failed_memory", firewallId, runToken, totalMemory, peakMemory, totalAlloc, failedAlloc, totalFree, failedFree);
+        }//✔️
+
+        public void InsertCapacityOptimisationData(OdbcConnection connection, int firewallId, int runToken, string hostname, string names, string id, string vals, string peaks, string slinks, string limit)
+        {
+            ExecuteInsertQuery(connection, "capacity_optimisation", firewallId, runToken, hostname, names, id, vals, peaks, slinks, limit);
+        }
+
+        public void InsertClusterXlData(OdbcConnection connection, int firewallId, int runToken, string syncMode, string ipAddress, string load, string state, string name)
+        {
+            ExecuteInsertQuery(connection, "cluster_xl", firewallId, runToken, syncMode, ipAddress, load, state, name);
+        }//✔️
+
+        public void InsertTokenData(OdbcConnection connection, string runToken, string runType)
+        {
+            ExecuteInsertQuery(connection, "get_token", runToken, runType);
+        }//✔️
+
+        public void UpsertTable(OdbcConnection connection, Dictionary<string, object> inputData, int fw_id, int token)
+        {
+
+
+            connection.Open();
+
+            string seccondQuery;
+            string query = InsertQueries["check_content"];
+            using (OdbcCommand command = new OdbcCommand(query, connection))
+            {
+                // Add parameters for the check query
+                command.Parameters.AddWithValue("@fk_m_firewall", fw_id);
+
+                object rowExists = command.ExecuteScalar();
+
+                if (rowExists != null && (int)rowExists == 1)  // Adjust condition based on your logic
                 {
-                    Console.WriteLine("An error occurred: " + ex.Message);
+                    // Update if exists
+                    seccondQuery = InsertQueries["upsert_content"];
                 }
+                else
+                {
+                    // Insert if not exists
+                    seccondQuery = InsertQueries["new_content"];
+                }
+
             }
 
-            return "offset";
-        }//✔️
 
-        public void InsertUptimeData(int firewallId, int runToken, string currentTime, int days, string uptime, int users, double load1, double load5, double load15)
-        {
-            ExecuteInsertQuery("uptime", firewallId, runToken, currentTime, days, uptime, users, load1, load5, load15);
-        }//✔️
 
-        public void InsertMemoryData(int firewallId, int runToken, string memType, double memTotal, double memUsed, double memFree, double memShared, double memCache, double memAvailable)
-        {
-            ExecuteInsertQuery("memory", firewallId, runToken, memType, memTotal, memUsed, memFree, memShared, memCache, memAvailable);
-        }//✔️
-
-        public void InsertDiskSpaceData(int firewallId, int runToken, string filesystem, string mountedOn, double total, double available, double used, double usedPercentage)
-        {
-            ExecuteInsertQuery("diskspace", firewallId, runToken, filesystem, mountedOn, total, available, used, usedPercentage);
-        }//✔️
-
-        public void InsertCpuData(int firewallId, int runToken, double cpuUserTimePercentage, double cpuSystemTimePercentage, double cpuIdleTimePercentage, double cpuUsagePercentage, double cpuQueueLength, double cpuInterruptPerSec, int cpuNumber)
-        {
-            ExecuteInsertQuery("cpu", firewallId, runToken, cpuUserTimePercentage, cpuSystemTimePercentage, cpuIdleTimePercentage, cpuUsagePercentage, cpuQueueLength, cpuInterruptPerSec, cpuNumber);
-        }//✔️
-
-        public void InsertRaidData(int firewallId, int runToken, string raidVolumeId, string raidLevel, int raidNumberOfDisks, string raidSize, string raidState, string raidFlag)
-        {
-            ExecuteInsertQuery("raid", firewallId, runToken, raidVolumeId, raidLevel, raidNumberOfDisks, raidSize, raidState, raidFlag);
-        }//✔️
-
-        public void InsertRxtxData(int firewallId, int runToken, string? @interface, string? hwaddr, string? inetAddr, string? bcast, string? mask, int mtu, int metric, int rxPackets, int rxErrors, int rxDropped, int rxOverruns, int rxFrame, int txPackets, int txErrors, int txDropped, int txOverruns, int txCarrier, int collisions, int txqueuelen, long rxBytes, string rxHumanReadable, long txBytes, string txHumanReadable)
-        {
-            ExecuteInsertQuery("rxtx", firewallId, runToken, @interface, hwaddr, inetAddr, bcast, mask, mtu, metric, rxPackets, rxErrors, rxDropped, rxOverruns, rxFrame, txPackets, txErrors, txDropped, txOverruns, txCarrier, collisions, txqueuelen, rxBytes, rxHumanReadable, txBytes, txHumanReadable);
-        }
-
-        public void InsertLicenseStatusData(int firewallId, int runToken, string licenseHost, DateTime licenseExpiration, string licenseFeature)
-        {
-            ExecuteInsertQuery("licenses_status", firewallId, runToken, licenseHost, licenseExpiration, licenseFeature);
-        }
-
-        public void InsertLicenseContractData(int firewallId, int runToken, string contractExpiration, int contractTotal)
-        {
-            ExecuteInsertQuery("licenses_contract", firewallId, runToken, contractExpiration, contractTotal);
-        }//✔️
-
-        public void InsertHotfixData(int firewallId, int runToken, string kernel, string buildNumber)
-        {
-            ExecuteInsertQuery("hotfix", firewallId, runToken, kernel, buildNumber);
-        }//✔️
-
-        public void InsertFailedMemoryData(int firewallId, int runToken, double totalMemory, double peakMemory, double totalAlloc, double failedAlloc, double totalFree, double failedFree)
-        {
-            ExecuteInsertQuery("failed_memory", firewallId, runToken, totalMemory, peakMemory, totalAlloc, failedAlloc, totalFree, failedFree);
-        }//✔️
-
-        public void InsertCapacityOptimisationData(int firewallId, int runToken, string hostname, string names, string id, string vals, string peaks, string slinks, string limit)
-        {
-            ExecuteInsertQuery("capacity_optimisation", firewallId, runToken, hostname, names, id, vals, peaks, slinks, limit);
-        }
-
-        public void InsertClusterXlData(int firewallId, int runToken, string syncMode, string ipAddress, string load, string state, string name)
-        {
-            ExecuteInsertQuery("cluster_xl", firewallId, runToken, syncMode, ipAddress, load, state, name);
-        }//✔️
-
-        public void InsertTokenData(string runToken, string runType)
-        {
-            ExecuteInsertQuery("get_token", runToken, runType);
-        }//✔️
-
-        public void UpsertTable(Dictionary<string, object> inputData, int fw_id, int token)
-        {
-            using (OdbcConnection connection = new OdbcConnection(GetConnectionString()))
+            using (OdbcCommand command = new OdbcCommand(seccondQuery, connection))
             {
-                try
-                {
-                    connection.Open();
+                // Add all parameters for the insert/update query
 
-                    string seccondQuery;
-                    string query = InsertQueries["check_content"];
-                    using (OdbcCommand command = new OdbcCommand(query, connection))
-                    {
-                        // Add parameters for the check query
-                        command.Parameters.AddWithValue("@fk_m_firewall", fw_id);
-
-                        object rowExists = command.ExecuteScalar();
-                        Console.WriteLine("debug");
-                        if (rowExists != null && (int)rowExists == 1)  // Adjust condition based on your logic
-                        {
-                            // Update if exists
-                            seccondQuery = InsertQueries["upsert_content"];
-                        }
-                        else
-                        {
-                            // Insert if not exists
-                            seccondQuery = InsertQueries["new_content"];
-                        }
-
-                    }
-
-
-
-                    using (OdbcCommand command = new OdbcCommand(seccondQuery, connection))
-                    {
-                        Console.WriteLine("tatatara");
-                        // Add all parameters for the insert/update query
-
-                        command.Parameters.AddWithValue("@fk_m_run_token", token);
-                        command.Parameters.AddWithValue("@uptime", inputData["uptime"]);
-                        command.Parameters.AddWithValue("@fwtmp", inputData["fwtmp"]);
-                        command.Parameters.AddWithValue("@varloglog", inputData["varloglog"]);
-                        command.Parameters.AddWithValue("@memory", inputData["mem"]);
-                        command.Parameters.AddWithValue("@swap", inputData["swap"]);
-                        command.Parameters.AddWithValue("@memory_error", inputData["memory_failed"]);
-                        command.Parameters.AddWithValue("@cpu", inputData["cpu"]);
-                        command.Parameters.AddWithValue("@rx_error_total", inputData["rx_error_total"]);
-                        command.Parameters.AddWithValue("@tx_error_total", inputData["tx_error_total"]);
-                        command.Parameters.AddWithValue("@sync_mode", inputData["sync_mode"]);
-                        command.Parameters.AddWithValue("@sync_state", inputData["sync_state"]);
-                        command.Parameters.AddWithValue("@license_expiration_status", inputData["licence_status"]);
-                        command.Parameters.AddWithValue("@raid_state", inputData["raid_state"]);
-                        command.Parameters.AddWithValue("@hotfix_module", inputData["hotfix"]);
-                        command.Parameters.AddWithValue("@fk_m_firewall", fw_id);
-                        // Execute the insert or update
-                        command.ExecuteNonQuery();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("An error occurred: " + ex.Message);
-                }
+                command.Parameters.AddWithValue("@fk_m_run_token", token);
+                command.Parameters.AddWithValue("@uptime", inputData["uptime"]);
+                command.Parameters.AddWithValue("@fwtmp", inputData["fwtmp"]);
+                command.Parameters.AddWithValue("@varloglog", inputData["varloglog"]);
+                command.Parameters.AddWithValue("@memory", inputData["mem"]);
+                command.Parameters.AddWithValue("@swap", inputData["swap"]);
+                command.Parameters.AddWithValue("@memory_error", inputData["memory_failed"]);
+                command.Parameters.AddWithValue("@cpu", inputData["cpu"]);
+                command.Parameters.AddWithValue("@rx_error_total", inputData["rx_error_total"]);
+                command.Parameters.AddWithValue("@tx_error_total", inputData["tx_error_total"]);
+                command.Parameters.AddWithValue("@sync_mode", inputData["sync_mode"]);
+                command.Parameters.AddWithValue("@sync_state", inputData["sync_state"]);
+                command.Parameters.AddWithValue("@license_expiration_status", inputData["licence_status"]);
+                command.Parameters.AddWithValue("@raid_state", inputData["raid_state"]);
+                command.Parameters.AddWithValue("@hotfix_module", inputData["hotfix"]);
+                command.Parameters.AddWithValue("@fk_m_firewall", fw_id);
+                // Execute the insert or update
+                command.ExecuteNonQuery();
             }
+
+
         }
 
 

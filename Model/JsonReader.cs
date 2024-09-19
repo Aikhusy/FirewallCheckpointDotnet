@@ -10,9 +10,7 @@ namespace Firewall
         public required string Server { get; set; }
         public required string Database { get; set; }
         public required string Trusted_Connection { get; set; }
-
         public required string UID { get; set; }
-
         public required string PWD { get; set; }
 
         public required string Encrypt { get; set; }
