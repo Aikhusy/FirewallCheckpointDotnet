@@ -14,32 +14,33 @@ namespace Firewall
         Dictionary<string, Regex> Patterns { get; }
 
         //function untuk Mengolah data uptime, dan menyimpan ke database.
-        Dictionary<string, string> RegexUptime(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        Dictionary<string, string> RegexUptime(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data RAM dan SWAP, dan menyimpan ke database.
-        Dictionary<string, double> RegexMemory(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        Dictionary<string, double> RegexMemory(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data disk (/tmp dan /logs), dan menyimpan ke database.
-        Dictionary<string, string> RegexDisk(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        Dictionary<string, string> RegexDisk(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data Rx error dan Tx error, dan menyimpan ke database.
-        Dictionary<string, int> RegexRxTx(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        Dictionary<string, int> RegexRxTx(OdbcConnection connection,string inputs, long fwId, long tokenId);
         //function untuk mengolah data Raid, dan menyimpan ke database.
-        string RegexRaid(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        string RegexRaid(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data patch firewall, dan menyimpannya ke database.
-        string RegexHotfix(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        string RegexHotfix(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data CPU, dan menyimpannya ke database.
-        string RegexCpu(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        string RegexCpu(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data memory gagal, dan menyimpannya ke database.
-        int RegexFailedMemory(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        int RegexFailedMemory(OdbcConnection connection,string inputs, long fwId, long tokenId);
 
         //function untuk mengolah data SyncMode dan Sync State, serta menyimpannya ke database.
-        Dictionary<string, string> RegexSyncMode(OdbcConnection connection,string inputstate, string inputMode, int fwId, int tokenId);
+        Dictionary<string, string> RegexSyncMode(OdbcConnection connection,string inputstate, string inputMode, long fwId, long tokenId);
 
-        string RegexExpiration(OdbcConnection connection,string inputs, int fwId, int tokenId);
+        string RegexExpiration(OdbcConnection connection,string inputs, long fwId, long tokenId);
         
+        string RegexCapacityOptimisationRemark(OdbcConnection connection, string inputSlinks, string inputLimit, long fwId, long tokenId);
     }
 }

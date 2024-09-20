@@ -9,14 +9,14 @@ namespace Firewall
 {
     public class Regexs : IRegexs
     {
-        private  readonly IConnection _connection;
-        public Regexs (IConnection connection)
+        private readonly IConnection _connection;
+        public Regexs(IConnection connection)
         {
             _connection = connection;
         }
-        private const bool detailedSave = true; // digunakan untuk status apakah detail data akan disimpan di database
+        private const bool detailedSave = false; // digunakan untuk status apakah detail data akan disimpan di database
 
-        public  int parseSecond(int days, string hourSecond)
+        public int parseSecond(int days, string hourSecond)
         {
             var timeParts = hourSecond.Split(':');
 
@@ -33,28 +33,28 @@ namespace Firewall
         }
 
         //untuk Casting data ke double atau default = 0
-        private  double ParseDouble(string value)
+        private double ParseDouble(string value)
         {
             double result;
             return double.TryParse(value, out result) ? result : 0;
         }
 
         //untuk casting tipe data ke int atau default = 0
-        private  int ParseInt(string value)
+        private int ParseInt(string value)
         {
             int result;
             return int.TryParse(value, out result) ? result : 0;
         }
 
         //untuk casting tipe data ke long atau default = 0
-        private  long ParseLong(string value)
+        private long ParseLong(string value)
         {
             long result;
             return long.TryParse(value, out result) ? result : 0;
         }
 
         //untuk menyimpan nilai regex yang digunakan untuk membaca data 
-        public  Dictionary<string, Regex> Patterns { get; } = new Dictionary<string, Regex>
+        public Dictionary<string, Regex> Patterns { get; } = new Dictionary<string, Regex>
         {
             { "uptime_default", new Regex(
                 @"(?<current_time>\d{2}:\d{2}:\d{2})\s+up\s+(?<days>\d+)\s+days?,\s+(?<uptime>\d{1,2}:\d{2}),\s+(?<users>\d+)\s+user[s]?,\s+load\s+average:\s+(?<load1>\d+\.\d+),\s+(?<load5>\d+\.\d+),\s+(?<load15>\d+\.\d+)"
@@ -63,6 +63,10 @@ namespace Firewall
             { "uptime_alt", new Regex(
                 @"(?<current_time>\d{2}:\d{2}:\d{2})\s+up\s+(?<days>\d+)\s+days?,\s+(?<minutes>\d+)\s+min,\s+(?<users>\d+)\s+user[s]?,\s+load\s+average:\s+(?<load1>\d+\.\d+),\s+(?<load5>\d+\.\d+),\s+(?<load15>\d+\.\d+)"
             )}, // untuk mendapatkan nilai uptime jika format jam= min, cth(25 min) -> 0 jam 25 menit. 
+
+            {"uptime_after_reboot", new Regex(
+                @"(?<current_time>\d{2}:\d{2}:\d{2})\s+up\s+(?<minutes>\d+)\s+min,\s+(?<users>\d+)\s+user[s]?,\s+load\s+average:\s+(?<load1>\d+\.\d+),\s+(?<load5>\d+\.\d+),\s+(?<load15>\d+\.\d+)"
+            )},
 
             { "memory", new Regex(
                 @"(?<type>\w+):\s+(?<total>\d+)\s+(?<used>\d+)\s+(?<free>\d+)\s+(?<shared>\d+)?\s*(?<buff_cache>\d+)?\s*(?<available>\d+)?"
@@ -136,11 +140,15 @@ namespace Firewall
 
             {"contract_expiration",new Regex(
                 @"\b\d{2}-[A-Za-z]{3}-\d{2}\b"
-            )}
+            )},
+
+            {"contract_expiration_alt",new Regex(
+                @"\b\d{2}[A-Za-z]{3}\d{4}\b"
+            )},
         };
 
         //function untuk Mengolah data uptime, dan menyimpan ke database.
-        public  Dictionary<string, string> RegexUptime(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public Dictionary<string, string> RegexUptime(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             // Try the first regex pattern (uptime_default)
             Match match = Patterns["uptime_default"].Match(inputs);
@@ -149,6 +157,12 @@ namespace Firewall
             if (!match.Success || !match.Groups["uptime"].Success)
             {
                 match = Patterns["uptime_alt"].Match(inputs);
+            }
+
+            // If still no match, try the third pattern (uptime_after_reboot)
+            if (!match.Success || (!match.Groups["uptime"].Success && !match.Groups["minutes"].Success))
+            {
+                match = Patterns["uptime_after_reboot"].Match(inputs);
             }
 
             // If a match is found
@@ -197,7 +211,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data RAM dan SWAP, dan menyimpan ke database.
-        public  Dictionary<string, double> RegexMemory(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public Dictionary<string, double> RegexMemory(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             var matches = Patterns["memory"].Matches(inputs);
             double swap = 0;
@@ -245,7 +259,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data disk (/tmp dan /logs), dan menyimpan ke database.
-        public  Dictionary<string, string> RegexDisk(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public Dictionary<string, string> RegexDisk(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             var matches = Patterns["filesystem"].Matches(inputs);
             string fwtmp = "0";
@@ -294,7 +308,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data Rx error dan Tx error, dan menyimpan ke database.
-        public  Dictionary<string, int> RegexRxTx(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public Dictionary<string, int> RegexRxTx(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             var pattern = Patterns["rx_tx"];
             var matches = pattern.Matches(inputs);
@@ -303,6 +317,7 @@ namespace Firewall
 
             foreach (Match match in matches)
             {
+
                 if (detailedSave)
                 {
                     // Extract values and cast to appropriate types
@@ -337,9 +352,9 @@ namespace Firewall
                         tokenId,
                         @interface,
                         hwaddr,
-                        inetAddr,
-                        bcast,
-                        mask,
+                        inetAddr ?? "",  // Replace null with empty string
+                        bcast ?? "",     // Replace null with empty string
+                        mask ?? "",
                         mtu,
                         metric,
                         rxPackets,
@@ -373,7 +388,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data Raid, dan menyimpan ke database.
-        public  string RegexRaid(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public string RegexRaid(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             // Try the first regex pattern (raid_default)
             var pattern = Patterns["raid"];
@@ -406,7 +421,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data patch firewall, dan menyimpannya ke database.
-        public  string RegexHotfix(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public string RegexHotfix(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             // Define the regex pattern for hotfix
             var pattern = Patterns["hotfix"];
@@ -433,7 +448,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data CPU, dan menyimpannya ke database.
-        public  string RegexCpu(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public string RegexCpu(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
 
             var pattern = Patterns["cpu"];
@@ -441,7 +456,6 @@ namespace Firewall
 
             if (match.Success)
             {
-
                 // Extract and convert the CPU queue length value
                 double cpuQueueLength = ParseDouble(match.Groups["queue_length"].Value);
                 // Nullable integer to represent NULL in SQL
@@ -469,11 +483,11 @@ namespace Firewall
             }
 
             // Return default value if no match is found
-            return "No CPU found";
+            return "0";
         }
 
         //function untuk mengolah data memory gagal, dan menyimpannya ke database.
-        public  int RegexFailedMemory(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public int RegexFailedMemory(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             // Define patterns for memory, allocation, and free statistics
             var memoryStat = Patterns["memory_stat"];
@@ -541,7 +555,7 @@ namespace Firewall
         }
 
         //function untuk mengolah data SyncMode dan Sync State, serta menyimpannya ke database.
-        public  Dictionary<string, string> RegexSyncMode(OdbcConnection connection,string inputState, string inputMode, int fwId, int tokenId)
+        public Dictionary<string, string> RegexSyncMode(OdbcConnection connection, string inputState, string inputMode, long fwId, long tokenId)
         {
             // Define the regex patterns for sync_mode and sync_state
             var syncModePattern = Patterns["sync_mode"];
@@ -588,10 +602,16 @@ namespace Firewall
                 };
         }
 
-        public  string RegexExpiration(OdbcConnection connection,string inputs, int fwId, int tokenId)
+        public string RegexExpiration(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
             var contract = Patterns["contract_expiration"];
             var matches = contract.Matches(inputs);
+
+            if (matches.Count == 0)
+            {
+                contract = Patterns["contract_expiration_alt"];
+                matches = contract.Matches(inputs);
+            }
             string result = " ";
             Dictionary<string, int> counts = new Dictionary<string, int>();
             HashSet<string> uniqueDates = new HashSet<string>(); // Inisialisasi HashSet untuk menyimpan tanggal unik
@@ -631,6 +651,35 @@ namespace Firewall
 
             return result;
 
+        }
+
+        public string RegexCapacityOptimisationRemark(OdbcConnection connection, string inputSlinks, string inputLimit, long fwId, long tokenId)
+        {
+            var corSlinksPattern = Patterns["capacity_optimisation"];
+
+            var corLimitPattern = Patterns["capacity_limit"];
+
+            var corLimitMatch = corLimitPattern.Match(inputLimit);
+            var corSlinksMatch = corSlinksPattern.Match(inputSlinks);
+
+            string limit = "nothing";
+
+            if (corLimitMatch.Success)
+            {
+                limit = corLimitMatch.Groups[1].Value;
+            }
+
+            if (corSlinksMatch.Success)
+            {
+                _connection.InsertCapacityOptimisationData(connection, fwId, tokenId, corSlinksMatch.Groups[1].Value, corSlinksMatch.Groups[2].Value, corSlinksMatch.Groups[3].Value, corSlinksMatch.Groups[4].Value, corSlinksMatch.Groups[5].Value, corSlinksMatch.Groups[6].Value, limit);
+            }
+
+            if (limit != "nothing")
+            {
+                return limit;
+            }
+
+            return "can't find Limit";
         }
     }
 }

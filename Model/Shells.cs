@@ -7,10 +7,10 @@ using System.Text;
 // file yang berisi segala sesuatu yang dibutuhkan untuk running SSH 
 namespace Firewall
 {
-    public static class Shells
+    public class Shells : IShells
 
     {
-        private static string ReadShellStream(ShellStream stream)
+        private  string ReadShellStream(ShellStream stream)
         {
             var output = new StringBuilder();
             string line;
@@ -23,7 +23,7 @@ namespace Firewall
 
             return output.ToString();
         }
-        private static readonly Dictionary<string, string> shellScript = new Dictionary<string, string>
+        private  readonly Dictionary<string, string> shellScript = new Dictionary<string, string>
         {
             
             { "uptime", @"uptime" },//uptime shell script
@@ -53,8 +53,12 @@ namespace Firewall
 
         };
 
+        public Shells()
+        {
+        }
+
         // Method for running shell script and get the output result
-        public static string RunAndGetOutput(string commands, ShellStream stream)
+        public  string RunAndGetOutput(string commands, ShellStream stream)
         {
             
             if (!shellScript.ContainsKey(commands))
@@ -71,66 +75,66 @@ namespace Firewall
             return ReadShellStream(stream);
         }
 
-        public static string GetUptime(ShellStream stream)
+        public  string GetUptime(ShellStream stream)
         {
             return RunAndGetOutput("uptime",stream);
         }
 
-        public static string GetRam(ShellStream stream)
+        public  string GetRam(ShellStream stream)
         {
             return RunAndGetOutput("ram",stream);
         }
 
-        public static string GetDisk(ShellStream stream)
+        public  string GetDisk(ShellStream stream)
         {
             return RunAndGetOutput("disk",stream);
         }
 
-        public static string GetCpu(ShellStream stream)
+        public  string GetCpu(ShellStream stream)
         {
             return RunAndGetOutput("cpu",stream);
         }
 
-        public static string GetRaid(ShellStream stream)
+        public  string GetRaid(ShellStream stream)
         {
             return RunAndGetOutput("raid",stream);
         }
-        public static string GetRxTx(ShellStream stream)
+        public  string GetRxTx(ShellStream stream)
         {
             return RunAndGetOutput("rxtx",stream);
         }
 
-        public static string GetLicense(ShellStream stream)
+        public  string GetLicense(ShellStream stream)
         {
             return RunAndGetOutput("license",stream);
         }
 
-        public static string GetHotfix(ShellStream stream)
+        public  string GetHotfix(ShellStream stream)
         {
             return RunAndGetOutput("hotfix",stream);
         }
 
-        public static string GetMemoryError(ShellStream stream)
+        public  string GetMemoryError(ShellStream stream)
         {
-            return RunAndGetOutput("license",stream);
+            return RunAndGetOutput("memory_error",stream);
         }
 
-        public static string GetCapacityOptimisation(ShellStream stream)
+        public  string GetCapacityOptimisation(ShellStream stream)
         {
             return RunAndGetOutput("capacity_optimisation",stream);
         }
 
-        public static string GetCapacityLimit(ShellStream stream)
+        public  string GetCapacityLimit(ShellStream stream)
         {
             return RunAndGetOutput("capacity_limit",stream);
         }
 
-        public static string GetSyncMode(ShellStream stream)
+        public  string GetSyncMode(ShellStream stream)
         {
             return RunAndGetOutput("sync_mode",stream);
         }
 
-        public static string GetSyncState(ShellStream stream)
+        public  string GetSyncState(ShellStream stream)
         {
             return RunAndGetOutput("capacity_optimisation",stream);
         }
