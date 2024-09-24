@@ -22,10 +22,17 @@ namespace Firewall
         double Expert_Shell_Delay { get; set; }
     }
 
+    public interface ITeleBot
+    {
+        bool Telegram_Alert_Status {get;set;}
+        string Telegram_Bot_API{get;set;}
+        long Telegram_Chat_Id{get;set;}
+    }
     // Interface for JSON reading functionality
     public interface IJsonReader
     {
         IDB ReadDatabaseJsonConfig(string filePath);
         IDelay ReadDelayJsonConfig(string filePath);
+        ITeleBot ReadTelegramJsonConfig(string filePath);
     }
 }

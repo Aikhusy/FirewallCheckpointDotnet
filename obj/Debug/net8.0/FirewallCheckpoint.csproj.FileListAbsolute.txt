@@ -27,3 +27,5 @@ C:\Users\HAPE\Desktop\FirewallCheckpointDotnet\obj\Debug\net8.0\FirewallCheckpoi
 C:\Users\HAPE\Desktop\FirewallCheckpointDotnet\obj\Debug\net8.0\Firewall.7D1C6801.Up2Date
 C:\Users\HAPE\Desktop\FirewallCheckpointDotnet\obj\Debug\net8.0\FirewallCheckpoint.sourcelink.json
 C:\Users\HAPE\Desktop\FirewallCheckpointDotnet\bin\Debug\net8.0\Renci.SshNet.dll
+C:\Users\HAPE\Desktop\FirewallCheckpointDotnet\bin\Debug\net8.0\Newtonsoft.Json.dll
+C:\Users\HAPE\Desktop\FirewallCheckpointDotnet\bin\Debug\net8.0\Telegram.Bot.dll

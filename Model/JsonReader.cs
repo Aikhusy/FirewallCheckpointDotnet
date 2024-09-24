@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using Telegram.Bot;
 
 namespace Firewall
 {
@@ -23,6 +24,12 @@ namespace Firewall
         public double Run_Command_Delay { get; set; }
         public double Expert_Shell_Delay { get; set; }
 
+    }
+    public class TeleBot : ITeleBot
+    {
+        public bool Telegram_Alert_Status {get;set;}
+        public string Telegram_Bot_API{get;set;}
+        public long Telegram_Chat_Id{get;set;}
     }
     public class JsonReader : IJsonReader
     {
@@ -55,6 +62,22 @@ namespace Firewall
             catch (Exception ex)
             {
                 Console.WriteLine($"Error reading delay configuration: {ex.Message}");
+                throw;
+            }
+        }
+
+        public ITeleBot ReadTelegramJsonConfig(string filepath)
+        {
+            try
+            {
+                using (FileStream fs = new FileStream(filepath, FileMode.Open,FileAccess.Read))
+                {
+                    return JsonSerializer.Deserialize<TeleBot>(fs);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error reading Telegram configuration: {ex.Message}");
                 throw;
             }
         }

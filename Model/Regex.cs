@@ -14,7 +14,7 @@ namespace Firewall
         {
             _connection = connection;
         }
-        private const bool detailedSave = false; // digunakan untuk status apakah detail data akan disimpan di database
+        private const bool detailedSave = true; // digunakan untuk status apakah detail data akan disimpan di database
 
         public int parseSecond(int days, string hourSecond)
         {
@@ -114,12 +114,11 @@ namespace Firewall
                 @"Total\s+memory\s+bytes\s+used:\s+(\d+)\s+peak:\s+(\d+)"
             )},// untuk mendapatkan data status memory, digunakan oleh FailedMemory.
 
-            { "alloc_stat", new Regex(
-                @"Allocations:\s+(\d+)\s+alloc\s+(\d+)\s+failed\s+alloc"
+            { "alloc_stat", new Regex(@"Allocations:\s+(\d+)\s+alloc,\s+(\d+)\s+failed\s+alloc"
             )},// untuk mendapatkan data failed allocation, digunakan untuk FailedMemory.
 
             { "free_stat", new Regex(
-                @"(\d+)\s+free\s+(\d+)\s+failed\s+free"
+                @"(\d+)\s+free,\s+(\d+)\s+failed\s+free"
             )},// untuk mendapatkan data free memory, digunakan untuk FailedMemory.
 
             { "capacity_optimisation", new Regex(
@@ -202,6 +201,7 @@ namespace Firewall
                 };
             }
 
+            return RegexUptime(connection, inputs, fwId, tokenId);
             // Return default values if no match was found
             return new Dictionary<string, string>
             {
@@ -489,6 +489,7 @@ namespace Firewall
         //function untuk mengolah data memory gagal, dan menyimpannya ke database.
         public int RegexFailedMemory(OdbcConnection connection, string inputs, long fwId, long tokenId)
         {
+            // Console.WriteLine(inputs);
             // Define patterns for memory, allocation, and free statistics
             var memoryStat = Patterns["memory_stat"];
             var allocStat = Patterns["alloc_stat"];
@@ -514,7 +515,7 @@ namespace Firewall
             // If memory pattern matches, extract the values
             if (memoryMatch.Success)
             {
-                Console.WriteLine("memory");
+                // Console.WriteLine("memory");
                 totalMemory = ParseInt(memoryMatch.Groups[1].Value);
                 peakMemory = ParseInt(memoryMatch.Groups[2].Value);
             }
@@ -522,15 +523,17 @@ namespace Firewall
             // If allocation pattern matches, extract the values
             if (allocMatch.Success)
             {
-                Console.WriteLine("alloc");
+                // Console.WriteLine("alloc");
                 totalAlloc = ParseInt(allocMatch.Groups[1].Value);
                 failedAlloc = int.Parse(allocMatch.Groups[2].Value);
+
+                Console.WriteLine(totalAlloc);
             }
 
             // If free pattern matches, extract the values
             if (freeMatch.Success)
             {
-                Console.WriteLine("free");
+                // Console.WriteLine("free");
                 totalFree = ParseInt(freeMatch.Groups[1].Value);
                 failedFree = int.Parse(freeMatch.Groups[2].Value);
             }

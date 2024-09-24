@@ -21,7 +21,7 @@ namespace Firewall
             {
                 // Read remaining data in the stream
                 string output = stream.Read();
-                Console.WriteLine(output);
+                
             }
         }
 
@@ -48,6 +48,7 @@ namespace Firewall
             .AddTransient<IEncrypt, Encrypt>()
             .AddTransient<IRegexs, Regexs>()
             .AddTransient<IShells, Shells>()
+            .AddTransient<INotif,Notif>()
             .BuildServiceProvider();
 
             // Resolve instance of ILampuMobil
@@ -57,7 +58,9 @@ namespace Firewall
             var Encrypt = serviceProvider.GetService<IEncrypt>();
             var Regexs = serviceProvider.GetService<IRegexs>();
             var Shells = serviceProvider.GetService<IShells>();
-
+            var Notif = serviceProvider.GetService<INotif>();
+            
+            StringBuilder messages = new StringBuilder();
             if (JsonReader == null || Connection == null || Firewall == null || Encrypt == null)
             {
                 Console.WriteLine("One or more dependencies are not resolved.");
@@ -81,13 +84,14 @@ namespace Firewall
                     string password = Encrypt.DecryptPassword((string)row["fw_password"]);
                     string expertPassword = Encrypt.DecryptPassword((string)row["fw_expert_password"]);
                     string firewallName = Connection.GetFirewallName(connection, (long)(row["fk_m_firewall"]));
-                    Console.WriteLine(Encrypt.DecryptPassword("eWoJXwhu/QZAZY25zVvjoVHkDFQ2/AzqGW1RJStbbU+r94s33v9QTzb+uItLo1fJry1w"));
+                    
 
 
                     int port = 1982;
                     long id = (long)row["fk_m_firewall"];
 
                     // Console.WriteLine(ipAddress);
+
 
 
                     using (var client = new SshClient(ipAddress, port, username, password))
@@ -143,7 +147,7 @@ namespace Firewall
 
                                 string memoryError = Shells.GetMemoryError(stream);
                                 // Console.WriteLine(memoryError);
-                                
+
                                 int memoryErrors = Regexs.RegexFailedMemory(connection, memoryError, id, token);
 
                                 string capacitySlinks = Shells.GetCapacityOptimisation(stream);
@@ -152,11 +156,15 @@ namespace Firewall
 
                                 string syncMode = Shells.GetSyncMode(stream);
                                 string syncState = Shells.GetSyncState(stream);
+
+                                string time = upts["uptime"];
+                                string[] splitTime = time.Split(':');
+                                
                                 Dictionary<string, string> sync = Regexs.RegexSyncMode(connection, syncState, syncMode, id, token);
                                 Console.WriteLine(upts["days"] + " " + upts["uptime"]);
                                 Dictionary<string, object> upsert = new Dictionary<string, object>
                                 {
-                                    {"uptime",upts["days"]+ " " + upts["uptime"]},
+                                    {"uptime",upts["days"]+ " days " + splitTime[0] + " Hours " + splitTime[1] +" minutes "},
                                     {"fwtmp",disks["fwtmp"]},
                                     {"varloglog",disks["varloglog"]},
                                     {"mem",rams["mem"]},
@@ -171,12 +179,11 @@ namespace Firewall
                                     {"raid_state",raids},
                                     {"hotfix",hotfixs},
                                 };
-                                Connection.UpsertTable(connection,upsert,id,token);
+                                Connection.UpsertTable(connection, upsert, id, token);
+
+                                messages.Append(Notif.CheckDataStatus(upsert, firewallName));
+
                             }
-                            // Read response (this is where you would expect a password prompt)
-
-                            // Proceed with other commands
-
 
                             FlushShellStream(stream);
                         }
@@ -194,6 +201,8 @@ namespace Firewall
 
                 }
             }
+
+            await Notif.RunBot(messages);
         }
 
     }
