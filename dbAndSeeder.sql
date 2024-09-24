@@ -144,7 +144,7 @@ CREATE TABLE tbl_t_firewall_current_status (
 	PRIMARY KEY (id),
 	fk_m_firewall BIGINT NOT NULL FOREIGN KEY REFERENCES tbl_m_firewall(id),
 	fk_m_run_token BIGINT NOT NULL FOREIGN KEY REFERENCES tbl_m_run_token(id),
-	uptime VARCHAR(20),
+	uptime VARCHAR(50),
 	fwtmp INT,
 	varloglog INT,
 	ram FLOAT,
