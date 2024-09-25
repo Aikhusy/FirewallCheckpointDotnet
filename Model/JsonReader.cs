@@ -27,18 +27,26 @@ namespace Firewall
     }
     public class TeleBot : ITeleBot
     {
-        public bool Telegram_Alert_Status {get;set;}
-        public string Telegram_Bot_API{get;set;}
-        public long Telegram_Chat_Id{get;set;}
+        public bool Telegram_Alert_Status { get; set; }
+        public string Telegram_Bot_API { get; set; }
+        public long Telegram_Chat_Id { get; set; }
     }
     public class JsonReader : IJsonReader
     {
-        
+        private string GetAbsolutePath(string relativePath)
+        {
+            // Get the directory of the executing assembly
+            string applicationPath = AppDomain.CurrentDomain.BaseDirectory;
+            // Combine it with the relative file path
+            return Path.Combine(applicationPath, relativePath);
+        }
+
         public IDB ReadDatabaseJsonConfig(string filePath)
         {
+            string absolutePath = GetAbsolutePath(filePath);
             try
             {
-                using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fs = new FileStream(absolutePath, FileMode.Open, FileAccess.Read))
                 {
                     return JsonSerializer.Deserialize<DB>(fs);
                 }
@@ -52,9 +60,10 @@ namespace Firewall
 
         public IDelay ReadDelayJsonConfig(string filePath)
         {
+            string absolutePath = GetAbsolutePath(filePath);
             try
             {
-                using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fs = new FileStream(absolutePath, FileMode.Open, FileAccess.Read))
                 {
                     return JsonSerializer.Deserialize<Delay>(fs);
                 }
@@ -66,16 +75,17 @@ namespace Firewall
             }
         }
 
-        public ITeleBot ReadTelegramJsonConfig(string filepath)
+        public ITeleBot ReadTelegramJsonConfig(string filePath)
         {
+            string absolutePath = GetAbsolutePath(filePath);
             try
             {
-                using (FileStream fs = new FileStream(filepath, FileMode.Open,FileAccess.Read))
+                using (FileStream fs = new FileStream(absolutePath, FileMode.Open, FileAccess.Read))
                 {
                     return JsonSerializer.Deserialize<TeleBot>(fs);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Error reading Telegram configuration: {ex.Message}");
                 throw;

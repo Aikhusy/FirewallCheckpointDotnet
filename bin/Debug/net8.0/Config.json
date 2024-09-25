@@ -1,0 +1,22 @@
+{
+    "Driver": "ODBC Driver 17 for SQL Server",
+    "Server": "DESKTOP-E5QF6IJ",
+    "Database": "dbo_checkpoint_firewall",
+    "Trusted_Connection": "no",
+    "UID":"sa",
+    "PWD":"abcde1234",
+    "Encrypt":"no",
+    "TrustServerCertificate":"no",
+    
+    "Invoke_Shell_Delay": 0.5,
+    "Run_Command_Delay": 0.7,
+    "Expert_Shell_Delay": 1,
+
+    "alert_status": false,
+
+    "Telegram_Alert_Status" : true,
+    "Telegram_Bot_API" :"6716626405:AAGrbNmB8CUpFSA-r57xS1eRAx2PuX2yZxc",
+    "Telegram_Chat_Id" : -1002394470457,
+    "Encrypt_Phrase" : "k*2ja6g3n1"
+}
+  
