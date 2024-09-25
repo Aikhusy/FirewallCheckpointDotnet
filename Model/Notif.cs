@@ -36,8 +36,6 @@ namespace Firewall
 
             var me = await botClient.GetMeAsync();
 
-            Console.WriteLine($"Hello! Bot {me.Username} is ready.");
-
             // Start receiving updates
             var cts = new CancellationTokenSource();
             botClient.StartReceiving(
@@ -46,15 +44,12 @@ namespace Firewall
                 cancellationToken: cts.Token
             );
 
-            Console.WriteLine("Press any key to exit");
-
             await botClient.SendTextMessageAsync(
                 chatId: -1002394470457,
                 text: messages.ToString(),
                 cancellationToken: cts.Token
             );
 
-            Console.ReadKey();
 
             // Stop receiving updates
             cts.Cancel();

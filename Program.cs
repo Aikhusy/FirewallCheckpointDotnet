@@ -71,7 +71,18 @@ namespace Firewall
             {
                 connection.Open();
                 var fwData = Firewall.GetFwData(connection);
-                int token = Connection.GetToken(connection);
+                long token;
+
+                if (Regexs.GetDetailedSave()==true)
+                {
+                    token = Connection.GetToken(connection);
+                }
+                else{
+
+                    token = 1;
+
+                }
+                
                 foreach (var row in fwData)
                 {
                     // foreach (var key in row.Keys)
@@ -85,21 +96,15 @@ namespace Firewall
                     string expertPassword = Encrypt.DecryptPassword((string)row["fw_expert_password"]);
                     string firewallName = Connection.GetFirewallName(connection, (long)(row["fk_m_firewall"]));
                     
-
-
                     int port = 1982;
                     long id = (long)row["fk_m_firewall"];
-
-                    // Console.WriteLine(ipAddress);
-
-
 
                     using (var client = new SshClient(ipAddress, port, username, password))
                     {
                         try
                         {
                             client.Connect();
-                            Console.WriteLine("Connected to SSH server");
+                            Console.WriteLine("Connected to SSH server firewall " + firewallName);
 
                             // Create a ShellStream for sending and receiving data interactively
                             var stream = client.CreateShellStream("customShell", 80, 24, 800, 600, 1024);
@@ -159,9 +164,9 @@ namespace Firewall
 
                                 string time = upts["uptime"];
                                 string[] splitTime = time.Split(':');
-                                
+
                                 Dictionary<string, string> sync = Regexs.RegexSyncMode(connection, syncState, syncMode, id, token);
-                                Console.WriteLine(upts["days"] + " " + upts["uptime"]);
+                        
                                 Dictionary<string, object> upsert = new Dictionary<string, object>
                                 {
                                     {"uptime",upts["days"]+ " days " + splitTime[0] + " Hours " + splitTime[1] +" minutes "},
@@ -203,6 +208,7 @@ namespace Firewall
             }
 
             await Notif.RunBot(messages);
+            
         }
 
     }

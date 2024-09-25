@@ -9,7 +9,7 @@ namespace Firewall
     public interface IRegexs
     {
         // const bool detailedSave; // digunakan untuk status apakah detail data akan disimpan di database
-
+        bool GetDetailedSave();
         //untuk menyimpan nilai regex yang digunakan untuk membaca data 
         Dictionary<string, Regex> Patterns { get; }
 

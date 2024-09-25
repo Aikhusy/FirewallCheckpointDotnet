@@ -16,6 +16,10 @@ namespace Firewall
         }
         private const bool detailedSave = true; // digunakan untuk status apakah detail data akan disimpan di database
 
+        public bool GetDetailedSave()
+        {
+            return detailedSave;
+        }
         public int parseSecond(int days, string hourSecond)
         {
             var timeParts = hourSecond.Split(':');
@@ -527,7 +531,6 @@ namespace Firewall
                 totalAlloc = ParseInt(allocMatch.Groups[1].Value);
                 failedAlloc = int.Parse(allocMatch.Groups[2].Value);
 
-                Console.WriteLine(totalAlloc);
             }
 
             // If free pattern matches, extract the values
