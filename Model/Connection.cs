@@ -11,7 +11,6 @@ namespace Firewall
     {
         private Random random = new Random();
         // bisa di tambahkan import configs
-        private const bool detailedSave = true;
         private readonly IJsonReader _JsonReader;
         public Connection(IJsonReader jsons)
         {
@@ -214,10 +213,6 @@ namespace Firewall
 
         public int GetToken(OdbcConnection connection)
         {
-            if (!detailedSave)
-            {
-                return 1;
-            }
             string random = RandomString(12);
             string query = InsertQueries["get_token"];
 

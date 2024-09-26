@@ -6,12 +6,16 @@ namespace Firewall
 {
     public class Encrypt : IEncrypt
     {
-        private static readonly string passphrase = "k*2ja6g3n1";
-
-        public Encrypt()
+        private readonly IJsonReader _JsonReader;
+        private readonly string passphrase;
+        public Encrypt(IJsonReader jsons)
         {
-            
+            _JsonReader = jsons;
+            IPassphrase config= _JsonReader.ReadEcryptJsonConfig("Config.json");
+            passphrase = config.Encrypt_Phrase;
         }
+
+        
 
         // Helper method to derive the key from the passphrase and salt
         private static byte[] DeriveKey(string passphrase, byte[] salt)

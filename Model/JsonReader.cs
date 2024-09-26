@@ -31,6 +31,11 @@ namespace Firewall
         public string Telegram_Bot_API { get; set; }
         public long Telegram_Chat_Id { get; set; }
     }
+
+    public class Passphrase : IPassphrase
+    {
+        public string Encrypt_Phrase { get; set; }
+    }
     public class JsonReader : IJsonReader
     {
         private string GetAbsolutePath(string relativePath)
@@ -83,6 +88,23 @@ namespace Firewall
                 using (FileStream fs = new FileStream(absolutePath, FileMode.Open, FileAccess.Read))
                 {
                     return JsonSerializer.Deserialize<TeleBot>(fs);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading Telegram configuration: {ex.Message}");
+                throw;
+            }
+        }
+
+        public IPassphrase ReadEcryptJsonConfig(string filePath)
+        {
+            string absolutePath = GetAbsolutePath(filePath);
+            try
+            {
+                using (FileStream fs = new FileStream(absolutePath, FileMode.Open, FileAccess.Read))
+                {
+                    return JsonSerializer.Deserialize<Passphrase>(fs);
                 }
             }
             catch (Exception ex)

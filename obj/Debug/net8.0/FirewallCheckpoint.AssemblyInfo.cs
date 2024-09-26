@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FirewallCheckpoint")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d0dfc5508aa019e8165a4f7258531660b2ee526")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e8b09fa43afa539686ee20accba4767b7219c45")]
 [assembly: System.Reflection.AssemblyProductAttribute("FirewallCheckpoint")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FirewallCheckpoint")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

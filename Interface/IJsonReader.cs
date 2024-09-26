@@ -34,5 +34,11 @@ namespace Firewall
         IDB ReadDatabaseJsonConfig(string filePath);
         IDelay ReadDelayJsonConfig(string filePath);
         ITeleBot ReadTelegramJsonConfig(string filePath);
+        IPassphrase ReadEcryptJsonConfig(string filePath);
+    }
+
+    public interface IPassphrase
+    {
+        public string Encrypt_Phrase { get; set; }
     }
 }
