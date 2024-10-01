@@ -443,7 +443,7 @@ namespace Firewall
                 // Insert data into the database
                 if (detailedSave) // Ensure to check if detailedSave is enabled
                 {
-                    var buildNumber = match.Groups[2].Value;
+                    var buildNumber = match.Groups[3].Value;
                     _connection.InsertHotfixData(connection, fwId, tokenId, hotfixValue, buildNumber);
                 }
             }
