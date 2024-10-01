@@ -17,7 +17,6 @@ namespace Firewall
 
         string GetUptime(ShellStream stream);
 
-
         string GetRam(ShellStream stream);
 
         string GetDisk(ShellStream stream);

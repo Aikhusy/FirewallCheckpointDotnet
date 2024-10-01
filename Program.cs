@@ -136,7 +136,7 @@ namespace Firewall
 
                                 string raid = Shells.GetRaid(stream);
                                 // Console.WriteLine(raid);
-                                string raids = Regexs.RegexRaid(connection, cpu, id, token);
+                                string raids = Regexs.RegexRaid(connection, raid, id, token);
 
                                 string rxtx = Shells.GetRxTx(stream);
                                 // Console.WriteLine(rxtx);
