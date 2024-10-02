@@ -281,3 +281,5 @@ VALUES
 (1, '172.24.39.244', 'pkl_2024', 'efmlUB5bEt/phHJ/CerJkJcEBxGS/fEBZgq9gO+6Ao7QSkHtkxu/Y12ZItxnM8ZwFJVf/g==', 'BJhSOnGtr9xWuVmDcd0v7juTRUo2cJ79kMPfiYu50HVSZNQ8Y3QKijttdDbq6WvsxGFbiJg='),
 (2, '172.24.39.245', 'pkl_2024', 'koo0A2kkv0lDuVzCJtlf/q2gBu1L2RIjAJ75Qo3BNzYuOi/6QwgSCdSvqbRjt0/8UFpfHA==', '9BwFmjvGKc3H8m7lgqmjXXLG0m2F54xpvfKsAKF4j7TOoY1UqdMQcPvoLj1kvAuaIpgJU2U=');
 
+--2 oktober 2024
+alter TABLE tbl_t_firewall_clusterxl add COLUMN fw_name VARCHAR (30),
