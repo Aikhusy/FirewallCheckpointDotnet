@@ -21,7 +21,7 @@ namespace Firewall
             {
                 // Read remaining data in the stream
                 string output = stream.Read();
-                
+
             }
         }
 
@@ -48,7 +48,7 @@ namespace Firewall
             .AddTransient<IEncrypt, Encrypt>()
             .AddTransient<IRegexs, Regexs>()
             .AddTransient<IShells, Shells>()
-            .AddTransient<INotif,Notif>()
+            .AddTransient<INotif, Notif>()
             .BuildServiceProvider();
 
             // Resolve instance of ILampuMobil
@@ -59,7 +59,7 @@ namespace Firewall
             var Regexs = serviceProvider.GetService<IRegexs>();
             var Shells = serviceProvider.GetService<IShells>();
             var Notif = serviceProvider.GetService<INotif>();
-            
+
             StringBuilder messages = new StringBuilder();
             if (JsonReader == null || Connection == null || Firewall == null || Encrypt == null)
             {
@@ -73,16 +73,17 @@ namespace Firewall
                 var fwData = Firewall.GetFwData(connection);
                 long token;
 
-                if (Regexs.GetDetailedSave()==true)
+                if (Regexs.GetDetailedSave() == true)
                 {
                     token = Connection.GetToken(connection);
                 }
-                else{
+                else
+                {
 
                     token = 1;
 
                 }
-                
+
                 foreach (var row in fwData)
                 {
                     // foreach (var key in row.Keys)
@@ -95,7 +96,7 @@ namespace Firewall
                     string password = Encrypt.DecryptPassword((string)row["fw_password"]);
                     string expertPassword = Encrypt.DecryptPassword((string)row["fw_expert_password"]);
                     string firewallName = Connection.GetFirewallName(connection, (long)(row["fk_m_firewall"]));
-                    
+
                     int port = 1982;
                     long id = (long)row["fk_m_firewall"];
 
@@ -115,12 +116,20 @@ namespace Firewall
 
                             if (stream.Expect(new Regex("Enter expert password:"), TimeSpan.FromSeconds(5)) != null)
                             {
-
                                 stream.WriteLine(expertPassword);
+                                string upt;
+                                Dictionary<string, string> upts;
+                                while (true)
+                                {
+                                    upt = Shells.GetUptime(stream);
+                                    // Console.WriteLine(upt);
+                                    upts = Regexs.RegexUptime(connection, upt, id, token);
+                                    if (upt != null)
+                                    {
+                                        break;
+                                    }
+                                }
 
-                                string upt = Shells.GetUptime(stream);
-                                // Console.WriteLine(upt);
-                                Dictionary<string, string> upts = Regexs.RegexUptime(connection, upt, id, token);
 
                                 string ram = Shells.GetRam(stream);
                                 // Console.WriteLine(upt);
@@ -162,11 +171,18 @@ namespace Firewall
                                 string syncMode = Shells.GetSyncMode(stream);
                                 string syncState = Shells.GetSyncState(stream);
 
+                                // if (id == 1)
+                                // {
+                                //     degubs debug = new degubs();
+                                //     syncMode = debug.BiggerData;
+                                //     syncState = debug.BiggerData;
+                                // }
+
                                 string time = upts["uptime"];
                                 string[] splitTime = time.Split(':');
 
                                 Dictionary<string, string> sync = Regexs.RegexSyncMode(connection, syncState, syncMode, id, token);
-                        
+
                                 Dictionary<string, object> upsert = new Dictionary<string, object>
                                 {
                                     {"uptime",upts["days"]+ " days " + splitTime[0] + " Hours " + splitTime[1] +" minutes "},
@@ -203,12 +219,11 @@ namespace Firewall
                         }
                     }
 
-
                 }
             }
 
             await Notif.RunBot(messages);
-            
+
         }
 
     }

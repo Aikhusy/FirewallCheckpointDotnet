@@ -203,10 +203,9 @@ namespace Firewall
                     { "days", days }
 
                 };
+                
             }
             Thread.Sleep(3000);
-            return RegexUptime(connection, inputs, fwId, tokenId);
-            // Return default values if no match was found
             return new Dictionary<string, string>
             {
                 { "uptime", "00:00" },
