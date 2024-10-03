@@ -166,10 +166,20 @@ namespace Firewall
 
                                 string capacitySlinks = Shells.GetCapacityOptimisation(stream);
                                 string capacityLimit = Shells.GetCapacityLimit(stream);
+                                degubs debugs = new degubs();
+                                if (id == 1)
+                                {
+
+                                    capacityLimit = debugs.peak;
+                                    capacitySlinks = debugs.slink;
+
+                                }
+
                                 string cor = Regexs.RegexCapacityOptimisationRemark(connection, capacitySlinks, capacityLimit, id, token);
 
                                 string syncMode = Shells.GetSyncMode(stream);
                                 string syncState = Shells.GetSyncState(stream);
+
 
                                 // if (id == 1)
                                 // {

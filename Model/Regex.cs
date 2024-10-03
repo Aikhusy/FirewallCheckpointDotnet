@@ -203,7 +203,7 @@ namespace Firewall
                     { "days", days }
 
                 };
-                
+
             }
             Thread.Sleep(3000);
             return new Dictionary<string, string>
@@ -671,8 +671,16 @@ namespace Firewall
 
             if (corLimitMatch.Success)
             {
-                limit = corLimitMatch.Groups[1].Value;
+                if (corLimitMatch.Groups[1].Success) // Jika ketemu angka limit
+                {
+                    limit = corLimitMatch.Groups[1].Value;
+                }
+                else // Jika ketemu "unlimited"
+                {
+                    limit = "unlimited";
+                }
             }
+
 
             if (corSlinksMatch.Success)
             {
