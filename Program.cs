@@ -124,7 +124,7 @@ namespace Firewall
                                     upt = Shells.GetUptime(stream);
                                     // Console.WriteLine(upt);
                                     upts = Regexs.RegexUptime(connection, upt, id, token);
-                                    if (upt != null)
+                                    if (upts["days"]!="00:00"&&upts["days"]!="0")
                                     {
                                         break;
                                     }
