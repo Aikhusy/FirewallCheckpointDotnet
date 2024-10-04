@@ -187,6 +187,16 @@ namespace Firewall
 
                                 string time = upts["uptime"];
                                 string[] splitTime = time.Split(':');
+
+                                // //debuging telenotif 
+                                // if (id == 1)
+                                // {
+                                //     disks["fwtmp"] = "84";
+                                //     rams["mem"] = 90;
+                                //     cpus ="100";
+                                //     rams["swap"] = 30;
+                                // }
+
                                 Dictionary<string, string> sync = Regexs.RegexSyncMode(connection, syncState, syncMode, id, token);
 
                                 Dictionary<string, object> upsert = new Dictionary<string, object>

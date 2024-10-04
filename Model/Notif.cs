@@ -13,7 +13,7 @@ namespace Firewall
     public class Notif : INotif
     {
         private readonly string botapi;
-        private readonly long chatid; 
+        private readonly long chatid;
         private ITelegramBotClient botClient;
         private readonly IJsonReader _JsonReader;
 
@@ -23,7 +23,7 @@ namespace Firewall
             _JsonReader = jsonReader;
 
             ITeleBot telebot = _JsonReader.ReadTelegramJsonConfig("config.json");
-            
+
             // Check for null or empty botapi and chatid
             if (string.IsNullOrEmpty(telebot.Telegram_Bot_API))
             {
@@ -121,6 +121,16 @@ namespace Firewall
         {
             StringBuilder tasks = new StringBuilder();
 
+            if (Convert.ToInt32(data["mem"]) >= 80)
+            {
+                string message = $"🚨 Alert: Firewall {fwName} RAM usage is high! Current RAM: {data["mem"]}% 🚨\n\n";
+                tasks.Append(message);
+            }
+            if (Convert.ToInt32(data["swap"]) >= 2)
+            {
+                string message = $"🚨 Alert: Firewall {fwName} SWAP usage is high! Current SWAP: {data["swap"]}% 🚨\n\n";
+                tasks.Append(message);
+            }
             // Corrected logic to alert on high resource usage (80% or above)
             if (Convert.ToInt32(data["cpu"]) >= 80)
             {
