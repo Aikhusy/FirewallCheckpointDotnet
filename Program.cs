@@ -124,7 +124,7 @@ namespace Firewall
                                     upt = Shells.GetUptime(stream);
                                     // Console.WriteLine(upt);
                                     upts = Regexs.RegexUptime(connection, upt, id, token);
-                                    if (upts["days"]!="00:00"&&upts["days"]!="0")
+                                    if (upts["days"] != "00:00" && upts["days"] != "0")
                                     {
                                         break;
                                     }
@@ -166,7 +166,12 @@ namespace Firewall
 
                                 string capacitySlinks = Shells.GetCapacityOptimisation(stream);
                                 string capacityLimit = Shells.GetCapacityLimit(stream);
-
+                                // if (id == 1)
+                                // {
+                                //     degubs dev = new degubs();
+                                //     capacityLimit = dev.peak;
+                                //     capacitySlinks = dev.slink;
+                                // }
                                 string cor = Regexs.RegexCapacityOptimisationRemark(connection, capacitySlinks, capacityLimit, id, token);
 
                                 string syncMode = Shells.GetSyncMode(stream);
@@ -182,7 +187,6 @@ namespace Firewall
 
                                 string time = upts["uptime"];
                                 string[] splitTime = time.Split(':');
-
                                 Dictionary<string, string> sync = Regexs.RegexSyncMode(connection, syncState, syncMode, id, token);
 
                                 Dictionary<string, object> upsert = new Dictionary<string, object>

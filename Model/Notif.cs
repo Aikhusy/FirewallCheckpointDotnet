@@ -12,6 +12,8 @@ namespace Firewall
 {
     public class Notif : INotif
     {
+        private readonly string botapi;
+        private readonly long chatid; 
         private ITelegramBotClient botClient;
         private readonly IJsonReader _JsonReader;
 
@@ -19,7 +21,33 @@ namespace Firewall
         {
             // Initialize the bot client
             _JsonReader = jsonReader;
-            botClient = new TelegramBotClient("6716626405:AAGrbNmB8CUpFSA-r57xS1eRAx2PuX2yZxc");
+
+            ITeleBot telebot = _JsonReader.ReadTelegramJsonConfig("config.json");
+            
+            // Check for null or empty botapi and chatid
+            if (string.IsNullOrEmpty(telebot.Telegram_Bot_API))
+            {
+                throw new ArgumentException("The Telegram bot API token is missing or empty.");
+            }
+
+            if (telebot.Telegram_Chat_Id == 0)
+            {
+                throw new ArgumentException("The Telegram chat ID is missing or invalid.");
+            }
+
+            botapi = telebot.Telegram_Bot_API;
+            chatid = telebot.Telegram_Chat_Id;
+
+            // Initialize bot client only if valid credentials are provided
+            try
+            {
+                botClient = new TelegramBotClient(botapi);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing the bot client: {ex.Message}");
+                throw;
+            }
         }
 
         // Method that initializes and runs the bot
@@ -33,26 +61,41 @@ namespace Firewall
                 return;
             }
 
+            try
+            {
+                var me = await botClient.GetMeAsync();
 
-            var me = await botClient.GetMeAsync();
+                if (me == null)
+                {
+                    throw new InvalidOperationException("Failed to connect to the Telegram bot API.");
+                }
 
-            // Start receiving updates
-            var cts = new CancellationTokenSource();
-            botClient.StartReceiving(
-                HandleUpdateAsync,
-                HandleErrorAsync,
-                cancellationToken: cts.Token
-            );
+                // Start receiving updates
+                var cts = new CancellationTokenSource();
+                botClient.StartReceiving(
+                    HandleUpdateAsync,
+                    HandleErrorAsync,
+                    cancellationToken: cts.Token
+                );
 
-            await botClient.SendTextMessageAsync(
-                chatId: -1002394470457,
-                text: messages.ToString(),
-                cancellationToken: cts.Token
-            );
+                // Send the alert message
+                await botClient.SendTextMessageAsync(
+                    chatId: chatid,
+                    text: messages.ToString(),
+                    cancellationToken: cts.Token
+                );
 
-
-            // Stop receiving updates
-            cts.Cancel();
+                // Stop receiving updates
+                cts.Cancel();
+            }
+            catch (ApiRequestException apiEx)
+            {
+                Console.WriteLine($"Telegram API Error: {apiEx.ErrorCode} - {apiEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error running the bot: {ex.Message}");
+            }
         }
 
         // Handle incoming updates
@@ -67,7 +110,7 @@ namespace Firewall
                 Console.WriteLine($"Received a message from {message.Chat.Username}: {message.Text}");
 
                 await botClient.SendTextMessageAsync(
-                    chatId: -1002394470457,
+                    chatId: chatid,
                     text: $"You said: {message.Text}",
                     cancellationToken: cancellationToken
                 );
